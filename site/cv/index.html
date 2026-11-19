@@ -12,11 +12,66 @@
   <link rel="stylesheet" href="../assets/css/main.css">
 </head>
 <body class="subpage">
-  <main class="page">
+  <main class="page cv">
     <a class="back" href="../">← cd ..</a>
     <p class="eyebrow"><b>$</b> cat cv.md</p>
     <h1>CV</h1>
-    <p class="empty">Nothing here yet.</p>
+    <p class="lead">One or two sentences about you: what you do and what you care about.</p>
+
+    <section class="cv-section" aria-labelledby="experience">
+      <h2 id="experience"><span class="hash" aria-hidden="true">## </span>Experience</h2>
+      <!-- One <li class="tl-item"> per job or project, newest first. Copy a whole <li>…</li> to add one.
+           .tl-key (the highlighted result) and .tags are optional. -->
+      <ol class="timeline">
+        <li class="tl-item">
+          <p class="tl-meta"><span class="tl-date">Mon YYYY – Present</span><span class="tl-place">City, Country</span></p>
+          <h3 class="tl-title">Company — Project</h3>
+          <p class="tl-role">Your role</p>
+          <p class="tl-desc">One line about what you built, owned or improved.</p>
+          <p class="tl-key"><span>Key:</span> Your most important result</p>
+          <ul class="tags">
+            <li>Tool</li><li>Tool</li><li>Tool</li><li>Tool</li>
+          </ul>
+        </li>
+        <li class="tl-item">
+          <p class="tl-meta"><span class="tl-date">Mon YYYY – Mon YYYY</span><span class="tl-place">City, Country</span></p>
+          <h3 class="tl-title">Company — Project</h3>
+          <p class="tl-role">Your role</p>
+          <p class="tl-desc">One line about what you built, owned or improved.</p>
+          <p class="tl-key"><span>Key:</span> Your most important result</p>
+          <ul class="tags">
+            <li>Tool</li><li>Tool</li><li>Tool</li>
+          </ul>
+        </li>
+      </ol>
+    </section>
+
+    <section class="cv-section" aria-labelledby="education">
+      <h2 id="education"><span class="hash" aria-hidden="true">## </span>Education</h2>
+      <!-- Same format as Experience; .tl-desc is optional. -->
+      <ol class="timeline">
+        <li class="tl-item">
+          <p class="tl-meta"><span class="tl-date">YYYY – YYYY</span><span class="tl-place">City</span></p>
+          <h3 class="tl-title">School or programme</h3>
+          <p class="tl-role">Degree or certificate</p>
+          <p class="tl-desc">Optional note.</p>
+        </li>
+      </ol>
+    </section>
+
+    <section class="cv-section" aria-labelledby="skills">
+      <h2 id="skills"><span class="hash" aria-hidden="true">## </span>Skills</h2>
+      <!-- One <dt> (group name) + <dd> (its tags) per group. -->
+      <dl class="skills">
+        <dt>Category</dt>
+        <dd><ul class="tags"><li>Skill</li><li>Skill</li><li>Skill</li></ul></dd>
+        <dt>Category</dt>
+        <dd><ul class="tags"><li>Skill</li><li>Skill</li><li>Skill</li></ul></dd>
+        <dt>Category</dt>
+        <dd><ul class="tags"><li>Skill</li><li>Skill</li></ul></dd>
+      </dl>
+    </section>
   </main>
+  <!-- include:contact-bar -->
 </body>
 </html>

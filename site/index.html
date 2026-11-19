@@ -8,8 +8,8 @@
   <script src="assets/js/theme.js"></script>
   <script>
     // Cover the page before first paint when the intro is going to play, so the
-    // page doesn't flash before the intro module loads. Must match
-    // RolloutIntro.shouldPlay() in assets/js/rollout-intro.js (same storage key).
+    // page doesn't flash before the intro module loads. Must match shouldAnimate()
+    // in assets/js/session.js (same storage key): ?intro, or not seen yet this session.
     (function () {
       var seen = false;
       try { seen = sessionStorage.getItem('rollout-intro:seen') === '1'; } catch (e) {}
@@ -26,7 +26,7 @@
   <script type="module" src="assets/js/main.js"></script>
 </head>
 <body>
-  <main class="page">
+  <main class="page home">
     <p class="eyebrow"><b>$</b> whoami</p>
     <h1>Lam Thanh Bui</h1>
     <p class="role">DevOps Engineer</p>
@@ -45,5 +45,6 @@
       <div class="line kube-next" aria-hidden="true"><span class="ps1">$ </span><span class="cursor"></span></div>
     </section>
   </main>
+  <!-- include:contact-bar -->
 </body>
 </html>

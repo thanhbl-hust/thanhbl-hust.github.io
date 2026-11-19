@@ -10,6 +10,24 @@
   --blue: #0969da;
   --toggle-track: #e6eaef;
   --toggle-icon: #9a6700;
+  /* syntax highlighting in blog code blocks (highlight.js classes, GitHub-like palette) */
+  --hl-comment: #6e7781;
+  --hl-keyword: #cf222e;
+  --hl-string: #0a3069;
+  --hl-number: #0550ae;
+  --hl-title: #8250df;
+  --hl-attr: #116329;
+  --hl-builtin: #953800;
+  --hl-add-fg: #116329;
+  --hl-add-bg: #dafbe1;
+  --hl-del-fg: #82071e;
+  --hl-del-bg: #ffebe9;
+  /* text colours in blog posts: :red[…] etc. and ==mark== (scripts/build.mjs) */
+  --tc-red: #cf222e;
+  --tc-orange: #bc4c00;
+  --tc-yellow: #9a6700;
+  --tc-purple: #8250df;
+  --tc-mark: #fff8c5;
   --mono: "JetBrains Mono", ui-monospace, "Cascadia Code", "Source Code Pro", Menlo, Consolas, "DejaVu Sans Mono", monospace;
 }
 
@@ -24,6 +42,22 @@
   --blue: #58a6ff;
   --toggle-track: #1c232c;
   --toggle-icon: #79c0ff;
+  --hl-comment: #8b949e;
+  --hl-keyword: #ff7b72;
+  --hl-string: #a5d6ff;
+  --hl-number: #79c0ff;
+  --hl-title: #d2a8ff;
+  --hl-attr: #7ee787;
+  --hl-builtin: #ffa657;
+  --hl-add-fg: #aff5b4;
+  --hl-add-bg: #033a16;
+  --hl-del-fg: #ffdcd7;
+  --hl-del-bg: #67060c;
+  --tc-red: #ff7b72;
+  --tc-orange: #ffa657;
+  --tc-yellow: #e3b341;
+  --tc-purple: #d2a8ff;
+  --tc-mark: rgb(187 128 9 / .4);
 }
 
 * { box-sizing: border-box; }
@@ -34,8 +68,9 @@ body {
   min-height: 100vh;
   min-height: 100dvh;
   display: grid;
+  grid-template-columns: minmax(0, 1fr); /* column never grows past the viewport to fit wide content (e.g. the 520px .kube) */
   place-items: center;
-  padding: 48px 16px;
+  padding: 48px 16px 112px;   /* bottom: room for the fixed contact strip + its fade */
   background: var(--bg);
   color: var(--fg);
   font-family: var(--mono);
@@ -56,12 +91,22 @@ html.intro-pending body::after {
 }
 @keyframes cover-failsafe { to { visibility: hidden; } }
 
+/* Everything in JetBrains Mono (owner's choice): browsers otherwise give code/pre/kbd
+   their own monospace font (Consolas, Courier…) and form controls Arial. */
+/* No ligatures in code: JetBrains Mono would draw "==", "->", "!=" as single glyphs,
+   hiding the characters a reader has to type. */
+code, kbd, pre, samp { font-family: var(--mono); font-variant-ligatures: none; }
+button, input, select, textarea { font: inherit; }
+
 a { color: var(--blue); text-decoration: none; }
 a:hover, a:focus-visible { text-decoration: underline; }
 
 /* ---------- page ---------- */
 
-.page { width: 100%; max-width: 880px; }
+/* The column is as wide as its content, so the content sits in the middle of the
+   screen: 720px for CV / blog / posts, 520px on the home page (= the .kube block). */
+.page { width: 100%; max-width: 720px; }
+.page.home { max-width: 520px; }
 .is-ready .page { animation: page-in .8s cubic-bezier(.2, .8, .2, 1) both; }
 @keyframes page-in { from { opacity: 0; transform: scale(.96); } }
 
@@ -88,7 +133,7 @@ h1 { margin: 0; font-size: clamp(1.75rem, 5vw, 2.5rem); line-height: 1.15; font-
 /* ---------- `kubectl get namespace` menu (namespaces.js) ---------- */
 
 .kube {
-  width: max-content;
+  width: 520px;   /* wider than its content (owner asked for a longer block); rows' highlight spans it */
   max-width: 100%;
   margin-top: 28px;
   padding: 14px 18px;
@@ -177,11 +222,275 @@ html.theme-anim .theme-knob {
 }
 html.theme-anim .theme-knob svg { transition: opacity .35s, transform .35s !important; }
 
-/* ---------- sub pages (cv/, blogs/) ---------- */
+/* ---------- contact bar (templates/partials/contact-bar.html, every page) ---------- */
+
+/* A solid, full-width strip at the bottom: page text scrolls *under* it and fades out
+   just above it, so nothing ever shows behind or beside the pill (owner's request). */
+.contact-dock {
+  position: fixed;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 10;
+  display: flex;
+  justify-content: center;
+  padding: 8px 16px 14px;
+  background: var(--bg);
+}
+.contact-dock::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 100%;
+  height: 28px;
+  background: linear-gradient(to bottom, transparent, var(--bg));
+  pointer-events: none;
+}
+.contact-bar {
+  display: flex;
+  gap: 2px;
+  padding: 5px;
+  background: var(--panel);
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  box-shadow: 0 2px 10px rgb(0 0 0 / .06);
+}
+.contact-bar a {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  padding: 6px 14px;
+  font-size: 13px;
+  color: var(--fg);
+  border-radius: 999px;
+  white-space: nowrap;
+}
+.contact-bar a:hover, .contact-bar a:focus-visible {
+  text-decoration: none;
+  background: color-mix(in srgb, var(--blue) 12%, transparent);
+}
+.contact-bar svg { width: 15px; height: 15px; flex: none; }
+.contact-bar .icon-fill { fill: currentColor; }
+.contact-bar .icon-stroke { fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+
+/* ---------- sub pages (cv/, blogs/, posts) ---------- */
 
 body.subpage { place-items: start center; }
 .back { display: inline-block; margin-bottom: 32px; font-size: 13px; }
-.empty { margin: 16px 0 0; color: var(--muted); }
+.lead { max-width: 62ch; margin: 10px 0 0; color: var(--muted); }
+
+.cv-section { margin-top: 44px; }
+.cv-section h2 { margin: 0 0 20px; font-size: 1.15rem; }
+.cv-section h2 .hash { color: var(--green); font-weight: 400; }
+
+/* CV timeline: a line on the left with a dot per entry */
+.timeline { margin: 0; padding: 0 0 0 26px; list-style: none; border-left: 1px solid var(--line); }
+.tl-item { position: relative; padding-bottom: 32px; }
+.tl-item:last-child { padding-bottom: 4px; }
+.tl-item::before {
+  content: "";
+  position: absolute;
+  top: .3em;
+  left: -33px;
+  width: 9px;
+  height: 9px;
+  background: var(--bg);
+  border: 2px solid var(--green);
+  border-radius: 50%;
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--green) 18%, transparent);
+}
+.tl-meta { display: flex; flex-wrap: wrap; gap: 0 10px; margin: 0; font-size: 12px; color: var(--muted); }
+.tl-date { color: var(--green); font-weight: 600; }
+.tl-place { padding-left: 10px; border-left: 1px solid var(--line); }
+.tl-title { margin: 4px 0 0; font-size: 1.2rem; line-height: 1.35; }
+.tl-role { margin: 2px 0 0; font-size: 12px; color: var(--muted); }
+.tl-desc { margin: 10px 0 0; }
+.tl-key {
+  display: inline-block;
+  margin: 12px 0 0;
+  padding: 3px 10px;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--green);
+  background: color-mix(in srgb, var(--green) 10%, transparent);
+  border-radius: 4px;
+}
+.tl-key span { color: var(--muted); font-weight: 400; }
+
+.tags { display: flex; flex-wrap: wrap; gap: 6px; margin: 12px 0 0; padding: 0; list-style: none; }
+.tags li {
+  padding: 1px 10px;
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--green);
+  background: color-mix(in srgb, var(--green) 10%, var(--panel));
+  border: 1px solid color-mix(in srgb, var(--green) 30%, transparent);
+  border-radius: 999px;
+}
+
+.skills { display: grid; grid-template-columns: max-content 1fr; gap: 14px 24px; margin: 0; }
+.skills dt { padding-top: 2px; font-size: 12px; color: var(--muted); }
+.skills dd { margin: 0; }
+.skills .tags { margin: 0; }
+
+/* blog list (templates/blog-index.html) */
+.post-list { margin: 32px 0 0; padding: 0; list-style: none; }
+.post-list li { margin-bottom: 18px; }
+.post-list .empty { color: var(--muted); }
+.post-row { display: flex; flex-wrap: wrap; gap: 0 18px; margin: 0 -8px; padding: 2px 8px; color: var(--fg); border-radius: 4px; }
+.post-row:hover, .post-row:focus-visible { text-decoration: none; background: color-mix(in srgb, var(--blue) 12%, transparent); }
+.post-row time { color: var(--muted); }
+.post-title { font-weight: 600; }
+.draft { margin-left: 6px; padding: 0 6px; font-size: 11px; font-weight: 400; color: var(--muted); border: 1px dashed var(--line); border-radius: 4px; }
+.post-desc { margin: 2px 0 0; font-size: 13px; color: var(--muted); }
+
+/* blog post (templates/blog-post.html): same JetBrains Mono as the rest of the site (owner's choice) */
+.post { position: relative; }
+.post h1 { font-size: clamp(1.5rem, 4vw, 2.1rem); }
+
+/* table of contents (scripts/build.mjs, active entry from assets/js/toc.js):
+   a box above the article, or a sticky column right of it on wide screens — the
+   article itself stays centred either way. */
+.toc {
+  margin: 24px 0 0;
+  padding: 14px 18px;
+  font-size: 13px;
+  background: var(--panel);
+  border: 1px solid var(--line);
+  border-radius: 10px;
+}
+.toc-title { margin: 0 0 8px; font-size: 11px; letter-spacing: .08em; text-transform: uppercase; color: var(--muted); }
+.toc ol { margin: 0; padding: 0; list-style: none; }
+.toc ol ol { margin: 2px 0 4px; padding-left: 14px; border-left: 1px solid var(--line); }
+.toc a {
+  position: relative;
+  display: block;
+  padding: 2px 8px 2px 1.6em;   /* left gutter holds the "▸", so text never shifts */
+  line-height: 1.5;
+  color: var(--muted);
+  border-radius: 4px;
+}
+.toc a:hover, .toc a:focus-visible { color: var(--fg); text-decoration: none; background: color-mix(in srgb, var(--blue) 10%, transparent); }
+.toc a.is-active { color: var(--fg); font-weight: 600; }
+.toc a.is-active::before { content: "▸"; position: absolute; left: .45em; color: var(--blue); }
+.toc code { font-size: .95em; }
+
+/* sidebar needs (vw - 720) / 2 >= 48 gap + 230 TOC + 16 gutter, plus room for a ~17px scrollbar */
+@media (min-width: 1340px) {
+  .toc {
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    left: calc(100% + 48px);
+    width: 230px;
+    margin: 0;
+    padding: 0;
+    background: none;
+    border: 0;
+  }
+  .toc-inner { position: sticky; top: 40px; max-height: calc(100vh - 150px); overflow-y: auto; }
+}
+
+/* headings reached through the TOC / #links stop a bit below the top edge */
+.prose h2, .prose h3 { scroll-margin-top: 56px; }
+@media (prefers-reduced-motion: no-preference) {
+  html { scroll-behavior: smooth; }
+}
+.post-meta { margin: 8px 0 0; font-size: 12px; color: var(--muted); }
+.prose {
+  margin-top: 28px;
+  font-size: 15px;
+  line-height: 1.8;
+}
+.prose > :first-child { margin-top: 0; }
+.prose h2, .prose h3 { margin: 2em 0 .6em; line-height: 1.3; }
+.prose h2 { font-size: 1.3rem; }
+.prose h3 { font-size: 1.1rem; }
+.prose p, .prose ul, .prose ol, .prose blockquote, .prose table, .prose pre { margin: 0 0 1.1em; }
+.prose a { text-decoration: underline; text-underline-offset: 2px; }
+.prose code { font-size: .92em; }
+.prose :not(pre) > code { padding: .1em .35em; background: color-mix(in srgb, var(--fg) 7%, transparent); border-radius: 4px; }
+.prose pre {
+  padding: 14px 16px;
+  overflow-x: auto;
+  font-size: 14px;
+  line-height: 1.6;
+  background: var(--panel);
+  border: 1px solid var(--line);
+  border-radius: 8px;
+}
+.prose pre code { font-size: inherit; }
+
+/* fenced code: <div class="code-block"><span class="code-lang">bash</span><pre>…</pre></div> (scripts/build.mjs) */
+.prose .code-block { position: relative; margin: 0 0 1.1em; }
+.prose .code-block pre { margin: 0; padding-top: 18px; }
+.prose .code-lang {
+  position: absolute;
+  top: 0;
+  right: 12px;
+  z-index: 1;
+  padding: 0 8px;
+  font-size: 11px;
+  line-height: 1.7;
+  color: var(--muted);
+  background: var(--panel);
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  transform: translateY(-50%);
+  pointer-events: none;
+}
+
+/* coloured text in posts: :red[…] → <span class="tc-red">, ==…== → <mark> (scripts/build.mjs) */
+.tc-red { color: var(--tc-red); }
+.tc-orange { color: var(--tc-orange); }
+.tc-yellow { color: var(--tc-yellow); }
+.tc-green { color: var(--green); }
+.tc-blue { color: var(--blue); }
+.tc-purple { color: var(--tc-purple); }
+.tc-gray { color: var(--muted); }
+.prose mark { padding: 0 .2em; color: inherit; background: var(--tc-mark); border-radius: 3px; }
+
+/* highlight.js token colours (tokens on :root / [data-theme="dark"]) */
+.hljs-comment, .hljs-quote, .hljs-meta { color: var(--hl-comment); }
+.hljs-keyword, .hljs-selector-tag, .hljs-doctag, .hljs-template-tag, .hljs-type { color: var(--hl-keyword); }
+.hljs-string, .hljs-regexp, .hljs-meta .hljs-string { color: var(--hl-string); }
+.hljs-number, .hljs-literal, .hljs-symbol, .hljs-operator, .hljs-variable.language_ { color: var(--hl-number); }
+.hljs-title, .hljs-section { color: var(--hl-title); }
+.hljs-attr, .hljs-attribute, .hljs-name, .hljs-tag, .hljs-property, .hljs-selector-class, .hljs-selector-id { color: var(--hl-attr); }
+.hljs-built_in, .hljs-variable, .hljs-template-variable, .hljs-params, .hljs-subst, .hljs-bullet { color: var(--hl-builtin); }
+.hljs-meta .hljs-keyword { color: var(--hl-keyword); }
+.hljs-code { color: var(--hl-string); }
+.hljs-link { color: var(--hl-string); text-decoration: underline; }
+.hljs-section, .hljs-strong { font-weight: 700; }
+.hljs-addition { color: var(--hl-add-fg); background: var(--hl-add-bg); }
+.hljs-deletion { color: var(--hl-del-fg); background: var(--hl-del-bg); }
+.prose blockquote { padding: .2em 1em; color: var(--muted); border-left: 3px solid var(--green); }
+.prose table { display: block; max-width: 100%; overflow-x: auto; border-collapse: collapse; font-size: 14px; }
+.prose th, .prose td { padding: 6px 12px; border: 1px solid var(--line); text-align: left; }
+.prose th { background: var(--panel); }
+.prose img { max-width: 100%; height: auto; border-radius: 6px; }
+.prose hr { margin: 2.2em 0; border: 0; border-top: 1px dashed var(--line); }
+.prose kbd {
+  padding: .05em .4em;
+  font: inherit;
+  font-size: .85em;
+  background: var(--panel);
+  border: 1px solid var(--line);
+  border-bottom-width: 2px;
+  border-radius: 4px;
+}
+.prose li:has(> input[type="checkbox"]) { list-style: none; margin-left: -1.2em; }  /* task list: checkbox instead of bullet */
+.prose input[type="checkbox"] { margin: 0 .5em 0 0; accent-color: var(--green); vertical-align: -.1em; }
+.prose details { margin: 0 0 1.1em; padding: .6em 1em; background: var(--panel); border: 1px solid var(--line); border-radius: 8px; }
+.prose summary { font-weight: 600; cursor: pointer; }
+.prose details[open] > summary { margin-bottom: .6em; }
+
+@media (max-width: 560px) {
+  .skills { grid-template-columns: 1fr; gap: 6px; }
+  .skills dd { margin-bottom: 10px; }
+  .contact-bar a { padding: 6px 12px; }
+}
 
 @media (prefers-reduced-motion: reduce) {
   .is-ready .page { animation: none; }
