@@ -1,0 +1,220 @@
+/* RolloutIntro overlay (assets/js/rollout-intro.js). Uses the tokens from main.css. */
+
+.ri {
+  /* pod status colours, Lens/k9s-like */
+  --ri-pending: #6e7781;
+  --ri-creating: #9a6700;
+  --ri-running: #1a7f37;
+  --ri-terminating: #cf222e;
+  /* cube face fill strength: on a light background lower opacity = lighter face */
+  --ri-shade-top: .45;
+  --ri-shade-left: .75;
+  --ri-shade-right: 1;
+  --ri-ease: cubic-bezier(.2, .8, .2, 1);
+
+  position: fixed;
+  inset: 0;
+  z-index: 1001;
+  display: grid;
+  place-items: center;
+  padding: 56px 16px 32px;
+  overflow: auto;
+  background: var(--bg);
+  color: var(--fg);
+  font-family: var(--mono);
+}
+
+[data-theme="dark"] .ri {
+  --ri-pending: #8b949e;
+  --ri-creating: #d29922;
+  --ri-running: #3fb950;
+  --ri-terminating: #f85149;
+  /* on a dark background higher opacity = lighter face */
+  --ri-shade-top: 1;
+  --ri-shade-left: .7;
+  --ri-shade-right: .45;
+}
+
+.ri-skip {
+  position: absolute;
+  top: 16px;
+  right: 16px;
+  padding: 4px 12px;
+  font: inherit;
+  font-size: 12px;
+  color: var(--muted);
+  background: none;
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  cursor: pointer;
+}
+.ri-skip:hover, .ri-skip:focus-visible { color: var(--fg); border-color: var(--muted); }
+
+.ri-center {
+  width: 100%;
+  max-width: 880px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 20px;
+}
+
+/* ---------- terminal line ---------- */
+
+.ri-term {
+  max-width: 100%;
+  padding: 10px 16px;
+  font-size: 14px;
+  line-height: 1.6;
+  background: var(--panel);
+  border: 1px solid var(--line);
+  border-radius: 8px;
+}
+.ri-term.is-compact { font-size: 12px; }
+.ri-term .line { white-space: pre-wrap; overflow-wrap: anywhere; }
+.ri-term .out { color: var(--muted); }
+/* .ps1 and .cursor come from main.css */
+
+/* ---------- deployment ---------- */
+
+.ri-stage { width: 100%; animation: ri-rise .5s var(--ri-ease) .1s both; }
+
+.ri-deploy {
+  padding: 14px 16px 18px;
+  background: var(--panel);
+  border: 1px solid var(--line);
+  border-radius: 10px;
+}
+.ri-deploy-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 2px 16px;
+  margin-bottom: 16px;
+  font-size: 13px;
+}
+.ri-kind, .ri-meta { color: var(--muted); }
+.ri-meta { font-size: 11px; }
+
+.ri-pods {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 10px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+/* A pod card. --c = status colour, --a = how solid the cube is (0 = outline).
+   Up to replicas + 2 cards show at once (surge pod + one still Terminating):
+   5 × 160px + gaps fits one row inside the 880px frame. */
+.ri-pod {
+  --c: var(--ri-running);
+  --a: 1;
+  width: 160px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  padding: 14px 8px 12px;
+  font-size: 11px;
+  line-height: 1.35;
+  text-align: center;
+  background: color-mix(in srgb, var(--c) 7%, var(--panel));
+  border: 1px solid color-mix(in srgb, var(--c) 40%, var(--line));
+  border-radius: 8px;
+  transition: border-color .3s, background-color .3s;
+}
+.ri-pod.is-new { animation: ri-pop .35s var(--ri-ease); }
+.ri-pod.is-pulse { animation: ri-pulse .9s ease-out; }
+
+.ri-pod[data-phase="pending"] { --c: var(--ri-pending); --a: 0; border-style: dashed; }
+.ri-pod[data-phase="creating"] { --c: var(--ri-creating); --a: .45; }
+.ri-pod[data-phase="terminating"] {
+  --c: var(--ri-terminating);
+  --a: .7;
+  opacity: .4;
+  transition: border-color .3s, background-color .3s, opacity var(--ri-terminate, .55s) ease-in;
+}
+
+.ri-cube { width: 44px; height: 44px; flex: none; overflow: visible; }
+.ri-cube path {
+  fill: var(--c);
+  stroke: var(--c);
+  stroke-width: 1.5;
+  stroke-linejoin: round;
+  transition: fill .3s, stroke .3s, fill-opacity .3s;
+}
+.ri-cube .top   { fill-opacity: calc(var(--a) * var(--ri-shade-top)); }
+.ri-cube .left  { fill-opacity: calc(var(--a) * var(--ri-shade-left)); }
+.ri-cube .right { fill-opacity: calc(var(--a) * var(--ri-shade-right)); }
+.ri-pod[data-phase="pending"] .ri-cube path { stroke-dasharray: 3 3; }
+.ri-pod[data-phase="running"] .ri-cube { filter: drop-shadow(0 0 8px color-mix(in srgb, var(--c) 40%, transparent)); }
+
+.ri-pod-name { max-width: 100%; }
+/* shared `<deployment>-<hash>-` prefix: small and quiet */
+.ri-pod-prefix { display: block; font-size: 10px; color: var(--muted); overflow-wrap: anywhere; }
+/* the unique 5-char suffix: what tells pods apart */
+.ri-pod-id { display: block; font-size: 15px; font-weight: 700; letter-spacing: .04em; color: var(--fg); }
+
+.ri-pod-status { display: flex; align-items: center; gap: 6px; color: var(--c); white-space: nowrap; }
+.ri-ind { flex: none; width: 7px; height: 7px; background: var(--c); border-radius: 50%; }
+.ri-pod[data-phase="creating"] .ri-ind {
+  width: 10px;
+  height: 10px;
+  background: none;
+  border: 1.5px solid color-mix(in srgb, var(--c) 30%, transparent);
+  border-top-color: var(--c);
+  animation: ri-spin .7s linear infinite;
+}
+
+.ri-status {
+  min-height: 3.2em;
+  margin: 12px 2px 0;
+  font-size: 12px;
+  line-height: 1.6;
+  color: var(--muted);
+}
+.ri-status.is-done { color: var(--ri-running); }
+
+@keyframes ri-rise  { from { opacity: 0; transform: translateY(12px); } }
+@keyframes ri-pop   { from { opacity: 0; transform: scale(.85); } }
+@keyframes ri-spin  { to { transform: rotate(360deg); } }
+@keyframes ri-pulse {
+  from { box-shadow: 0 0 0 0 color-mix(in srgb, var(--ri-running) 55%, transparent); }
+  to   { box-shadow: 0 0 0 12px transparent; }
+}
+
+/* ---------- narrower than one 5-card row: pods become a vertical list ---------- */
+
+@media (max-width: 920px) {
+  .ri-pods {
+    flex-direction: column;
+    flex-wrap: nowrap;
+    justify-content: flex-start;
+    gap: 8px;
+    /* fixed height for the most pods shown at once (--slots), so nothing jumps */
+    min-height: calc(var(--slots, 5) * 56px + (var(--slots, 5) - 1) * 8px);
+  }
+  .ri-pod {
+    width: auto;
+    height: 56px;
+    flex-direction: row;
+    gap: 12px;
+    padding: 0 12px;
+    text-align: left;
+  }
+  .ri-cube { width: 28px; height: 28px; }
+  .ri-pod-name { flex: 1; min-width: 0; line-height: 1.25; }
+  .ri-pod-id { font-size: 14px; }
+  .ri-pod-status { font-size: 10px; }
+}
+
+@media (max-width: 640px) {
+  .ri-term { padding: 8px 12px; font-size: 12px; }
+  .ri-term.is-compact { font-size: 11px; }
+  .ri-deploy { padding: 12px; }
+  .ri-status { min-height: 4.8em; } /* status messages wrap to up to 3 lines */
+}

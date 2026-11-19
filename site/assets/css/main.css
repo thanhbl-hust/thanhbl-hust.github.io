@@ -1,0 +1,192 @@
+/* Light is the default theme; theme.js sets <html data-theme="dark"> when chosen. */
+:root {
+  color-scheme: light;
+  --bg: #f6f8fa;
+  --panel: #ffffff;
+  --line: #d0d7de;
+  --fg: #1f2328;
+  --muted: #59636e;
+  --green: #1a7f37;
+  --blue: #0969da;
+  --toggle-track: #e6eaef;
+  --toggle-icon: #9a6700;
+  --mono: "JetBrains Mono", ui-monospace, "Cascadia Code", "Source Code Pro", Menlo, Consolas, "DejaVu Sans Mono", monospace;
+}
+
+:root[data-theme="dark"] {
+  color-scheme: dark;
+  --bg: #0a0d12;
+  --panel: #0f141b;
+  --line: #262e39;
+  --fg: #e6edf3;
+  --muted: #9198a1;
+  --green: #3fb950;
+  --blue: #58a6ff;
+  --toggle-track: #1c232c;
+  --toggle-icon: #79c0ff;
+}
+
+* { box-sizing: border-box; }
+html, body { margin: 0; }
+html.intro-open { overflow: hidden; }
+
+body {
+  min-height: 100vh;
+  min-height: 100dvh;
+  display: grid;
+  place-items: center;
+  padding: 48px 16px;
+  background: var(--bg);
+  color: var(--fg);
+  font-family: var(--mono);
+  font-size: 14px;
+  line-height: 1.6;
+}
+
+/* Pre-paint cover while the intro module loads (class set by the inline script
+   in index.html, removed by RolloutIntro.mount). If the script never runs, the
+   cover hides itself after 4 s so the page is never stuck behind it. */
+html.intro-pending body::after {
+  content: "";
+  position: fixed;
+  inset: 0;
+  z-index: 1000;
+  background: var(--bg);
+  animation: cover-failsafe 0s 4s forwards;
+}
+@keyframes cover-failsafe { to { visibility: hidden; } }
+
+a { color: var(--blue); text-decoration: none; }
+a:hover, a:focus-visible { text-decoration: underline; }
+
+/* ---------- page ---------- */
+
+.page { width: 100%; max-width: 880px; }
+.is-ready .page { animation: page-in .8s cubic-bezier(.2, .8, .2, 1) both; }
+@keyframes page-in { from { opacity: 0; transform: scale(.96); } }
+
+.eyebrow { margin: 0 0 6px; color: var(--muted); }
+.eyebrow b { color: var(--green); font-weight: 400; }
+h1 { margin: 0; font-size: clamp(1.75rem, 5vw, 2.5rem); line-height: 1.15; font-weight: 700; letter-spacing: -0.02em; }
+.role { margin: 6px 0 0; color: var(--muted); }
+.links { display: flex; gap: 20px; margin-top: 14px; }
+
+/* ---------- terminal bits (shared with the intro) ---------- */
+
+.ps1 { color: var(--green); }
+.cursor {
+  display: inline-block;
+  width: .62em;
+  height: 1.2em;
+  margin-bottom: -.22em;
+  background: var(--fg);
+  animation: blink 1.06s steps(1) infinite;
+}
+.cursor.typing { animation: none; }
+@keyframes blink { 50% { opacity: 0; } }
+
+/* ---------- `kubectl get namespace` menu (namespaces.js) ---------- */
+
+.kube {
+  width: max-content;
+  max-width: 100%;
+  margin-top: 28px;
+  padding: 14px 18px;
+  overflow-x: auto;
+  background: var(--panel);
+  border: 1px solid var(--line);
+  border-radius: 10px;
+}
+.kube .line, .kube-row { white-space: pre; }
+.kube-out { display: grid; }   /* rows stretch to the widest one, so highlights line up */
+.kube.is-typing :is(.kube-out, .kube-next) { visibility: hidden; }  /* space kept: no layout jump */
+
+.kube-row { display: block; margin: 0 -8px; padding: 0 8px; border-radius: 4px; color: var(--fg); }
+.kube-head { color: var(--muted); }
+a.kube-row { cursor: pointer; }
+a.kube-row:hover, a.kube-row:focus-visible { text-decoration: none; }
+a.kube-row:is(.is-selected, :hover, :focus-visible) { background: color-mix(in srgb, var(--blue) 12%, transparent); }
+a.kube-row:focus-visible { outline: 1px solid var(--blue); outline-offset: -1px; }
+
+/* "▸" gutter: always 2ch wide so columns never shift, visible on the selected row */
+.kube-mark { display: inline-block; width: 2ch; color: var(--blue); visibility: hidden; }
+a.kube-row:is(.is-selected, :hover, :focus-visible) .kube-mark { visibility: visible; }
+.kube-ok { color: var(--green); }
+
+/* ---------- theme toggle (added by theme.js) ---------- */
+
+.theme-toggle {
+  position: fixed;
+  top: 16px;
+  right: 16px;
+  z-index: 10;
+  width: 56px;
+  height: 30px;
+  padding: 0;
+  background: var(--toggle-track);
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  cursor: pointer;
+  transition: background-color .35s, border-color .35s;
+}
+.theme-toggle:focus-visible { outline: 2px solid var(--blue); outline-offset: 2px; }
+
+/* The knob slides from left (light) to right (dark): 54px inner width - 2 × 3px inset - 22px knob = 26px. */
+.theme-knob {
+  position: absolute;
+  top: 3px;
+  left: 3px;
+  width: 22px;
+  height: 22px;
+  display: grid;
+  place-items: center;
+  color: var(--toggle-icon);
+  background: var(--panel);
+  border-radius: 50%;
+  box-shadow: 0 1px 3px rgb(0 0 0 / .25);
+  transition: transform .35s cubic-bezier(.65, 0, .35, 1), background-color .35s, color .35s;
+}
+[data-theme="dark"] .theme-knob { transform: translateX(26px); }
+
+.theme-knob svg {
+  grid-area: 1 / 1;
+  width: 14px;
+  height: 14px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  transition: opacity .35s, transform .35s;
+}
+.icon-moon { opacity: 0; transform: rotate(-90deg) scale(.5); }
+[data-theme="dark"] .icon-sun { opacity: 0; transform: rotate(90deg) scale(.5); }
+[data-theme="dark"] .icon-moon { opacity: 1; transform: none; }
+
+/* While switching, every colour cross-fades instead of jumping. The knob keeps
+   its own transitions (more specific !important rules below). */
+html.theme-anim,
+html.theme-anim *,
+html.theme-anim *::before,
+html.theme-anim *::after {
+  transition: background-color .4s ease, color .4s ease, border-color .4s ease,
+    fill .4s ease, stroke .4s ease, box-shadow .4s ease !important;
+}
+html.theme-anim .theme-knob {
+  transition: transform .35s cubic-bezier(.65, 0, .35, 1), background-color .35s, color .35s !important;
+}
+html.theme-anim .theme-knob svg { transition: opacity .35s, transform .35s !important; }
+
+/* ---------- sub pages (cv/, blogs/) ---------- */
+
+body.subpage { place-items: start center; }
+.back { display: inline-block; margin-bottom: 32px; font-size: 13px; }
+.empty { margin: 16px 0 0; color: var(--muted); }
+
+@media (prefers-reduced-motion: reduce) {
+  .is-ready .page { animation: none; }
+  .cursor { animation: none; }
+  /* The theme toggle's knob slide and colour cross-fade stay on: small, and only
+     when the visitor clicks. (The owner's own Windows has animation effects off,
+     so browsers report reduced motion there.) */
+}

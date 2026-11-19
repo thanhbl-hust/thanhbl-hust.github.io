@@ -1,0 +1,50 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Lam Thanh Bui · DevOps Engineer</title>
+  <meta name="description" content="Lam Thanh Bui — DevOps Engineer.">
+  <script src="assets/js/theme.js"></script>
+  <script>
+    // Cover the page before first paint when the intro is going to play, so the
+    // page doesn't flash before the intro module loads. Must match
+    // RolloutIntro.shouldPlay() in assets/js/rollout-intro.js (same storage key).
+    (function () {
+      var seen = false;
+      try { seen = sessionStorage.getItem('rollout-intro:seen') === '1'; } catch (e) {}
+      var reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+      if (/[?&]intro\b/.test(location.search) || (!seen && !reduced)) {
+        document.documentElement.classList.add('intro-pending');
+      }
+    })();
+  </script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap">
+  <link rel="stylesheet" href="assets/css/main.css">
+  <link rel="stylesheet" href="assets/css/rollout-intro.css">
+  <script type="module" src="assets/js/main.js"></script>
+</head>
+<body>
+  <main class="page">
+    <p class="eyebrow"><b>$</b> whoami</p>
+    <h1>Lam Thanh Bui</h1>
+    <p class="role">DevOps Engineer</p>
+    <nav class="links">
+      <a href="https://github.com/thanhbl-hust">github ↗</a>
+    </nav>
+
+    <!-- Finished state; assets/js/namespaces.js animates it when it should. Spaces in the rows are the column alignment. -->
+    <section class="kube" id="kube" aria-label="kubectl get namespace">
+      <div class="kube-cmd"><div class="line"><span class="ps1">$ </span><span class="cmd">kubectl get namespace</span></div></div>
+      <nav class="kube-out" aria-label="Sections">
+        <div class="kube-row kube-head" aria-hidden="true"><span class="kube-mark"></span>NAME       STATUS   AGE</div>
+        <a class="kube-row" href="cv/" aria-label="my-cv: CV"><span class="kube-mark" aria-hidden="true">▸</span>my-cv      <span class="kube-ok">Active</span>   2y</a>
+        <a class="kube-row" href="blogs/" aria-label="my-blogs: blogs"><span class="kube-mark" aria-hidden="true">▸</span>my-blogs   <span class="kube-ok">Active</span>   1y</a>
+      </nav>
+      <div class="line kube-next" aria-hidden="true"><span class="ps1">$ </span><span class="cursor"></span></div>
+    </section>
+  </main>
+</body>
+</html>
