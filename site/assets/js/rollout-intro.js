@@ -1,4 +1,4 @@
-// RolloutIntro — full-screen intro shown once per browser session:
+// RolloutIntro — full-screen intro, shown only on the first view in a session (see session.js):
 //   1. types `kubectl rollout restart deploy <name>` in a small terminal
 //   2. terminal moves up, a Deployment with <replicas> Running pods appears
 //   3. RollingUpdate (maxSurge 1 / maxUnavailable 0) replaces the pods one by one
@@ -6,47 +6,40 @@
 //   5. zooms into a pod and hands over to the page (onComplete)
 //
 // Usage: new RolloutIntro({ onComplete }).mount();
-// Skip: the Skip button or any key. Not played again in the same session
-// (sessionStorage); add ?intro to the URL to force it. With prefers-reduced-motion
+// Skip: the Skip button or any key. When it plays is decided in session.js (not
+// when coming back from cv/ or blogs/; ?intro forces it). With prefers-reduced-motion
 // it still plays, but without big movement: no FLIP slides and a fade instead of the zoom.
 
 import { Timeline } from './timeline.js';
 import { Terminal } from './terminal.js';
 import { Deployment } from './deployment.js';
+import { shouldAnimate, markSeen } from './session.js';
 
 export const CONFIG = {
   deployment: 'my-portfolio',
   replicas: 3,
   // Also read by the inline script in index.html — keep the two in sync.
   storageKey: 'rollout-intro:seen',
-  // All in ms. Total with these values ≈ 10.5 s.
+  // All in ms. Total with these values ≈ 6 s (owner's target).
   timing: {
-    start: 300,        // empty screen before typing
-    typeMin: 20,       // per typed character: random between typeMin and typeMax
-    typeMax: 45,
-    afterType: 250,    // pause before "Enter"
-    afterOutput: 500,  // "restarted" visible before the terminal moves up
-    layout: 600,       // terminal moves up, Deployment appears
-    pending: 500,      // new pod: Pending -> ContainerCreating
-    creating: 1000,    // new pod: ContainerCreating -> Running
-    nextPod: 300,      // Ready -> next new pod is created
-    terminate: 900,    // old pod fades while Terminating, then is removed
-    hold: 700,         // after "successfully rolled out"
-    exit: 700,         // zoom into a pod + fade to the page
+    start: 200,        // empty screen before typing
+    typeMin: 16,       // per typed character: random between typeMin and typeMax
+    typeMax: 30,
+    afterType: 200,    // pause before "Enter"
+    afterOutput: 300,  // "restarted" visible before the terminal moves up
+    layout: 400,       // terminal moves up, Deployment appears
+    pending: 250,      // new pod: Pending -> ContainerCreating
+    creating: 450,     // new pod: ContainerCreating -> Running
+    nextPod: 120,      // Ready -> next new pod is created
+    terminate: 500,    // old pod fades while Terminating, then is removed
+    hold: 350,         // after "successfully rolled out"
+    exit: 600,         // zoom into a pod + fade to the page
     skipExit: 300,     // fade when skipped
   },
 };
 
 const EASE = 'cubic-bezier(.65, 0, .35, 1)';
 const reducedMotion = () => window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-
-function alreadySeen(key) {
-  try { return sessionStorage.getItem(key) === '1'; } catch { return false; }
-}
-
-function markSeen(key) {
-  try { sessionStorage.setItem(key, '1'); } catch { /* storage blocked: intro may replay, that's fine */ }
-}
 
 export class RolloutIntro {
   constructor({ onComplete = () => {}, config = CONFIG } = {}) {
@@ -58,8 +51,7 @@ export class RolloutIntro {
   // Reduced motion doesn't stop the intro (the owner's own Windows has animation
   // effects off and wants to see it); it only tones the movement down.
   static shouldPlay(cfg = CONFIG) {
-    if (new URLSearchParams(location.search).has('intro')) return true;
-    return !alreadySeen(cfg.storageKey);
+    return shouldAnimate(cfg.storageKey);
   }
 
   mount(parent = document.body) {

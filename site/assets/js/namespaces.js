@@ -6,22 +6,15 @@
 
 import { Timeline } from './timeline.js';
 import { Terminal } from './terminal.js';
+import { shouldAnimate, markSeen } from './session.js';
 
 const CONFIG = {
   command: 'kubectl get namespace',
-  storageKey: 'kubectl-ns:seen', // typed once per session
+  storageKey: 'kubectl-ns:seen', // typed only on the first view per session (session.js)
   typeMin: 40,                   // ms per character, random in [typeMin, typeMax] (~50)
   typeMax: 60,
   afterType: 300,                // pause before the output appears
 };
-
-function seen() {
-  try { return sessionStorage.getItem(CONFIG.storageKey) === '1'; } catch { return false; }
-}
-
-function markSeen() {
-  try { sessionStorage.setItem(CONFIG.storageKey, '1'); } catch { /* not remembered: types again next time */ }
-}
 
 export class NamespaceList {
   constructor(root) {
@@ -31,10 +24,9 @@ export class NamespaceList {
     this.selected = 0;
     this.ready = false;
 
-    // Typing isn't big movement, so it plays with reduced motion too (like the
-    // intro); ?intro forces it again in the same session.
-    const forced = new URLSearchParams(location.search).has('intro');
-    this.animate = forced || !seen();
+    // Same rules as the intro (session.js). Typing isn't big movement, so it
+    // plays with reduced motion too.
+    this.animate = shouldAnimate(CONFIG.storageKey);
 
     if (this.animate) {
       this.term = new Terminal(this.cmdLine, { prompt: '$ ' }); // empty prompt + blinking cursor
@@ -48,7 +40,7 @@ export class NamespaceList {
   // Call once the whoami block is fully shown.
   async play() {
     if (this.animate) {
-      markSeen();
+      markSeen(CONFIG.storageKey);
       const t = new Timeline();
       await this.term.type(CONFIG.command, t, CONFIG.typeMin, CONFIG.typeMax);
       await t.sleep(CONFIG.afterType);

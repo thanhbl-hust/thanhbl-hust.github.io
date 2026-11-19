@@ -1,5 +1,6 @@
 import { RolloutIntro } from './rollout-intro.js';
 import { NamespaceList } from './namespaces.js';
+import { forcedByUrl } from './session.js';
 
 const page = document.querySelector('.page');
 const namespaces = new NamespaceList(document.getElementById('kube'));
@@ -16,3 +17,11 @@ new RolloutIntro({
     namespaces.play();
   },
 }).mount();
+
+// Both animations have read ?intro by now; drop it from the address bar so a later
+// Back / reload of this entry doesn't force them again.
+if (forcedByUrl()) {
+  const url = new URL(location.href);
+  url.searchParams.delete('intro');
+  history.replaceState(history.state, '', url.pathname + url.search + url.hash);
+}
