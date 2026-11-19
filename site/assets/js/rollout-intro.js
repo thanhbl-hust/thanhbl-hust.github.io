@@ -7,7 +7,8 @@
 //
 // Usage: new RolloutIntro({ onComplete }).mount();
 // Skip: the Skip button or any key. Not played again in the same session
-// (sessionStorage), nor with prefers-reduced-motion. Add ?intro to the URL to force it.
+// (sessionStorage); add ?intro to the URL to force it. With prefers-reduced-motion
+// it still plays, but without big movement: no FLIP slides and a fade instead of the zoom.
 
 import { Timeline } from './timeline.js';
 import { Terminal } from './terminal.js';
@@ -37,6 +38,7 @@ export const CONFIG = {
 };
 
 const EASE = 'cubic-bezier(.65, 0, .35, 1)';
+const reducedMotion = () => window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
 function alreadySeen(key) {
   try { return sessionStorage.getItem(key) === '1'; } catch { return false; }
@@ -53,9 +55,10 @@ export class RolloutIntro {
     this.done = false;
   }
 
+  // Reduced motion doesn't stop the intro (the owner's own Windows has animation
+  // effects off and wants to see it); it only tones the movement down.
   static shouldPlay(cfg = CONFIG) {
     if (new URLSearchParams(location.search).has('intro')) return true;
-    if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return false;
     return !alreadySeen(cfg.storageKey);
   }
 
@@ -139,6 +142,7 @@ export class RolloutIntro {
     const a = term.getBoundingClientRect();
     term.classList.add('is-compact');
     this.stage.hidden = false;
+    if (reducedMotion()) return; // no slide; the stage still fades in (CSS)
     const b = term.getBoundingClientRect();
     term.animate([
       { transformOrigin: '0 0', transform: `translate(${a.left - b.left}px, ${a.top - b.top}px) scale(${a.width / b.width})` },
@@ -155,8 +159,8 @@ export class RolloutIntro {
 
     const T = this.cfg.timing;
     let frames = [{ opacity: 1 }, { opacity: 0 }];
-    let duration = T.skipExit;
-    const target = skipped ? null : this.deploy.focusPod();
+    let duration = skipped ? T.skipExit : T.exit;
+    const target = skipped || reducedMotion() ? null : this.deploy.focusPod();
     if (target) {
       const r = target.getBoundingClientRect();
       this.el.style.transformOrigin = `${r.left + r.width / 2}px ${r.top + r.height / 2}px`;
@@ -165,11 +169,11 @@ export class RolloutIntro {
         { opacity: 1, offset: 0.35 },
         { opacity: 0, transform: 'scale(4)' },
       ];
-      duration = T.exit;
     }
 
-    this.onComplete(); // the page starts its entrance underneath the fading overlay
+    // Start the exit first, so onComplete can see (and wait for) it via getAnimations().
     const anim = this.el.animate(frames, { duration, easing: EASE, fill: 'forwards' });
     anim.onfinish = () => this.el.remove();
+    this.onComplete(); // the page starts its entrance underneath the fading overlay
   }
 }

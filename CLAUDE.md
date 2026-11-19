@@ -38,15 +38,15 @@ CLAUDE.md                       # this file (not deployed)
 ## Main page: `kubectl get namespace` (NamespaceList)
 
 - `index.html` contains the finished block: command, table (header + two `<a class="kube-row">`), next prompt. Column alignment is literal spaces under `white-space: pre`, kubectl-style (NAME 11 ch, STATUS 9 ch); keep them when editing rows. The `▸` marker sits in a fixed 2ch gutter so columns never shift.
-- Animates (types ~50 ms/char, 300 ms pause, then shows the table) only on the first view per session (`sessionStorage['kubectl-ns:seen']`), not with reduced motion; `?intro` forces it. While typing, `.kube.is-typing` hides the table with `visibility` (space kept, so the centred page doesn't jump).
+- Animates (types ~50 ms/char, 300 ms pause, then shows the table) only on the first view per session (`sessionStorage['kubectl-ns:seen']`), also with reduced motion (typing isn't movement); `?intro` forces it. While typing, `.kube.is-typing` hides the table with `visibility` (space kept, so the centred page doesn't jump).
 - Starts after the `.page` entrance animation finishes (`page.getAnimations()` in `main.js`).
 - Menu: hover/focus selects a row (`.is-selected` = light highlight + `▸`); roving tabindex; ↑/↓ and Enter are handled on `document` only when focus is on the body or a row, so other controls keep their keys. `my-cv` is selected by default. AGE fits even at 320 px, so it isn't dropped on mobile.
 
 ## Intro gating
 
-- Plays once per session: `sessionStorage['rollout-intro:seen']`, every access in try/catch.
-- Never plays with `prefers-reduced-motion: reduce`.
-- `?intro` in the URL forces it (for testing). A new tab is a new session, so it plays there too.
+- Plays once per session: `sessionStorage['rollout-intro:seen']`, every access in try/catch. A new tab is a new session, so it plays there again; a reload in the same tab doesn't.
+- Plays with `prefers-reduced-motion: reduce` too (owner's request — their Windows has animation effects off and the intro was invisible to them), but toned down: no FLIP slides (terminal move-up, card reflow), stage/cards fade instead of rise/pop, and the exit is a fade instead of the zoom. Keep it that way.
+- `?intro` in the URL forces it (for testing).
 - The inline script in `index.html` repeats this check before first paint and sets `html.intro-pending`, which covers the page until `mount()` removes it (CSS failsafe hides the cover after 4 s). If you change the storage key or the rules, change both places.
 
 ## Conventions
@@ -57,7 +57,7 @@ CLAUDE.md                       # this file (not deployed)
   - `theme.js` (plain script, first thing in `<head>`, so no flash) sets `<html data-theme="light|dark">` from `localStorage['theme']` and injects the fixed top-right switch on DOMContentLoaded. Every page must include it.
   - Tokens: `:root` / `:root[data-theme="dark"]` in `main.css`; intro status colours and cube shading (`--ri-shade-*`) on `.ri` / `[data-theme="dark"] .ri` in `rollout-intro.css`. Any new colour must be a token with both values.
   - Switching must animate, not jump (owner asked): the knob slides (`transform`), and `html.theme-anim` (set for 450 ms) cross-fades all colours. The knob's own transitions are kept by more specific `!important` rules.
-- Reduced motion: the intro and page entrance are skipped, but the theme toggle's slide/fade stays on (small, visitor-initiated). Note the owner's own Windows has "Animation effects" off, so their browsers report `prefers-reduced-motion: reduce` — they only see the intro with `?intro`, and headless Edge on that machine reports it too.
+- Reduced motion means "no big movement", not "no animation": the intro and the kubectl typing still play (toned down, see "Intro gating"), the page entrance scale is skipped, the theme toggle's slide/fade stays on (small, visitor-initiated). The owner's own Windows has "Animation effects" off, so their browsers — and headless Edge on that machine — report `prefers-reduced-motion: reduce`; that path is what they actually see.
 - Must work at 390px wide: 16px side gutter, no horizontal page scroll.
 
 ## Preview & verify

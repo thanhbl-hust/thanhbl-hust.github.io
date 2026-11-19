@@ -13,8 +13,7 @@
     (function () {
       var seen = false;
       try { seen = sessionStorage.getItem('rollout-intro:seen') === '1'; } catch (e) {}
-      var reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-      if (/[?&]intro\b/.test(location.search) || (!seen && !reduced)) {
+      if (/[?&]intro\b/.test(location.search) || !seen) {
         document.documentElement.classList.add('intro-pending');
       }
     })();

@@ -21,9 +21,12 @@ const randomId = n => Array.from({ length: n }, () => ALPHABET[Math.floor(Math.r
 
 const FLIP_MS = 350;
 const FLIP_EASE = 'cubic-bezier(.2, .8, .2, 1)';
+const reducedMotion = () => window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
 // Run `mutate`, then animate `els` from where they were to where they ended up.
+// With reduced motion the cards just take their new place (no slide).
 function flip(els, mutate) {
+  if (reducedMotion()) { mutate(); return; }
   const before = new Map(els.map(el => [el, el.getBoundingClientRect()]));
   mutate();
   for (const [el, a] of before) {
@@ -115,10 +118,10 @@ export class Deployment {
   remove(pod) {
     this.pods = this.pods.filter(p => p !== pod);
     this.renderStatus();
-    const out = pod.el.animate(
-      [{ opacity: getComputedStyle(pod.el).opacity, transform: 'scale(1)' }, { opacity: 0, transform: 'scale(.9)' }],
-      { duration: 200, easing: 'ease-in', fill: 'forwards' },
-    );
+    const from = { opacity: getComputedStyle(pod.el).opacity };
+    const to = { opacity: 0 };
+    if (!reducedMotion()) { from.transform = 'scale(1)'; to.transform = 'scale(.9)'; }
+    const out = pod.el.animate([from, to], { duration: 200, easing: 'ease-in', fill: 'forwards' });
     out.onfinish = () => flip([...this.list.children].filter(el => el !== pod.el), () => pod.el.remove());
   }
 

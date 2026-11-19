@@ -31,10 +31,10 @@ export class NamespaceList {
     this.selected = 0;
     this.ready = false;
 
-    // ?intro forces the animations, like for the intro (the owner's machine reports reduced motion).
+    // Typing isn't big movement, so it plays with reduced motion too (like the
+    // intro); ?intro forces it again in the same session.
     const forced = new URLSearchParams(location.search).has('intro');
-    const reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-    this.animate = forced || (!reduced && !seen());
+    this.animate = forced || !seen();
 
     if (this.animate) {
       this.term = new Terminal(this.cmdLine, { prompt: '$ ' }); // empty prompt + blinking cursor

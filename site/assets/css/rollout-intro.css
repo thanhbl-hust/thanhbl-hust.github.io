@@ -180,6 +180,7 @@
 .ri-status.is-done { color: var(--ri-running); }
 
 @keyframes ri-rise  { from { opacity: 0; transform: translateY(12px); } }
+@keyframes ri-fade  { from { opacity: 0; } }
 @keyframes ri-pop   { from { opacity: 0; transform: scale(.85); } }
 @keyframes ri-spin  { to { transform: rotate(360deg); } }
 @keyframes ri-pulse {
@@ -210,6 +211,12 @@
   .ri-pod-name { flex: 1; min-width: 0; line-height: 1.25; }
   .ri-pod-id { font-size: 14px; }
   .ri-pod-status { font-size: 10px; }
+}
+
+/* Reduced motion: the intro still plays, but things fade instead of moving or
+   scaling (the JS side drops the FLIP slides and the exit zoom). */
+@media (prefers-reduced-motion: reduce) {
+  .ri-stage, .ri-pod.is-new { animation-name: ri-fade; }
 }
 
 @media (max-width: 640px) {
