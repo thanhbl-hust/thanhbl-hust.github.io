@@ -1,0 +1,28 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>{{title}} · Lam Thanh Bui</title>
+  <meta name="description" content="{{description}}">
+  <script src="../../assets/js/theme.js"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap">
+  <link rel="stylesheet" href="../../assets/css/main.css">
+  <script type="module" src="../../assets/js/toc.js"></script>
+</head>
+<body class="subpage">
+  <main class="page post">
+    <a class="back" href="../">← cd ..</a>
+    <p class="eyebrow"><b>$</b> cat blogs/{{slug}}.md</p>
+    <h1 lang="vi">{{title}}</h1>
+    <p class="post-meta"><time datetime="{{date}}">{{date}}</time> · {{minutes}} min read</p>
+    {{{toc}}}
+    <article class="prose" lang="vi">
+{{{html}}}
+    </article>
+  </main>
+  <!-- include:contact-bar -->
+</body>
+</html>

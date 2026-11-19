@@ -1,0 +1,26 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 720 168" width="720" height="168" font-family="'JetBrains Mono', ui-monospace, Menlo, Consolas, monospace">
+  <title>blog/*.md → GitHub Actions → GitHub Pages</title>
+  <defs>
+    <marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto">
+      <path d="M0 0 10 5 0 10z" fill="#1a7f37"/>
+    </marker>
+  </defs>
+  <rect width="720" height="168" rx="12" fill="#f6f8fa"/>
+  <g stroke="#d0d7de" fill="#ffffff">
+    <rect x="28" y="46" width="184" height="76" rx="8"/>
+    <rect x="268" y="46" width="184" height="76" rx="8"/>
+    <rect x="508" y="46" width="184" height="76" rx="8"/>
+  </g>
+  <g stroke="#1a7f37" stroke-width="2" marker-end="url(#arrow)">
+    <line x1="214" y1="84" x2="264" y2="84"/>
+    <line x1="454" y1="84" x2="504" y2="84"/>
+  </g>
+  <g text-anchor="middle">
+    <text x="120" y="80" font-size="15" font-weight="700" fill="#1f2328">blog/*.md</text>
+    <text x="120" y="102" font-size="12" fill="#59636e">viết bài</text>
+    <text x="360" y="80" font-size="15" font-weight="700" fill="#1f2328">GitHub Actions</text>
+    <text x="360" y="102" font-size="12" fill="#59636e">npm run build</text>
+    <text x="600" y="80" font-size="15" font-weight="700" fill="#1f2328">GitHub Pages</text>
+    <text x="600" y="102" font-size="12" fill="#59636e">/blogs/&lt;slug&gt;/</text>
+  </g>
+</svg>
