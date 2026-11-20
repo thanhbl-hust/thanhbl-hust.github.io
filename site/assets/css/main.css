@@ -367,6 +367,12 @@ body:has(> .page.home) { padding-bottom: 48px; }
 .back { display: inline-block; margin-bottom: 32px; font-size: 13px; }
 .lead { max-width: 62ch; margin: 10px 0 0; color: var(--muted); }
 
+/* CV profile line under the name: position · year of birth (same look as .tl-meta) */
+.cv-meta { display: flex; flex-wrap: wrap; gap: 0 10px; margin: 8px 0 0; font-size: 13px; color: var(--muted); }
+.cv-position { color: var(--green); font-weight: 600; }
+.cv-born { padding-left: 10px; border-left: 1px solid var(--line); }
+.cv .lead { margin-top: 14px; }
+
 .cv-section { margin-top: 44px; }
 .cv-section h2 { margin: 0 0 20px; font-size: 1.15rem; }
 .cv-section h2 .hash { color: var(--green); font-weight: 400; }
