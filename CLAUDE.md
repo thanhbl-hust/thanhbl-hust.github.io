@@ -53,6 +53,7 @@ CLAUDE.md                       # this file (not deployed)
 
 ## CV
 
+- Top (owner's request): the name as the `h1`, then `.cv-meta` (position · year of birth, just the number — owner dropped the "Born" label), then a `.lead` intro paragraph. Name and position are the ones already public on the home page; the birth year and the intro are placeholders the owner fills in.
 - Layout follows craftaholic.sh's `/work/`: per entry date · place, "Company — Project", role, one-line description, a `Key:` highlight and tag pills; then Education (same timeline) and Skills (`<dl>` of tag groups).
 - The content is **placeholder text on purpose** ("Company — Project", "Tool", "Skill"…): the owner fills it in by hand. HTML comments in the file say which block to copy for a new entry. Don't fill it from their CV unless asked; never publish their phone number.
 
