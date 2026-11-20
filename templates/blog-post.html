@@ -13,16 +13,19 @@
   <script type="module" src="../../assets/js/toc.js"></script>
 </head>
 <body class="subpage">
+  <!-- include:top-bar -->
   <main class="page post">
     <a class="back" href="../">← cd ..</a>
     <p class="eyebrow"><b>$</b> cat blogs/{{slug}}.md</p>
-    <h1 lang="vi">{{title}}</h1>
-    <p class="post-meta"><time datetime="{{date}}">{{date}}</time> · {{minutes}} min read</p>
-    {{{toc}}}
-    <article class="prose" lang="vi">
+    <div class="post-body">
+      <h1 lang="vi">{{title}}</h1>
+      <p class="post-meta"><time datetime="{{date}}">{{date}}</time> · {{minutes}} min read</p>
+      {{{toc}}}
+      <article class="prose" lang="vi">
 {{{html}}}
-    </article>
+      </article>
+    </div>
   </main>
-  <!-- include:contact-bar -->
+  <!-- include:site-nav -->
 </body>
 </html>

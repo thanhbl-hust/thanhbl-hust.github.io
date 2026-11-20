@@ -28,6 +28,7 @@
   --tc-yellow: #9a6700;
   --tc-purple: #8250df;
   --tc-mark: #fff8c5;
+  --scrim: rgb(31 35 40 / .32);   /* dims the page behind the TOC drawer */
   --mono: "JetBrains Mono", ui-monospace, "Cascadia Code", "Source Code Pro", Menlo, Consolas, "DejaVu Sans Mono", monospace;
 }
 
@@ -58,11 +59,29 @@
   --tc-yellow: #e3b341;
   --tc-purple: #d2a8ff;
   --tc-mark: rgb(187 128 9 / .4);
+  --scrim: rgb(1 4 9 / .6);
 }
 
 * { box-sizing: border-box; }
 html, body { margin: 0; }
+/* Space for the scrollbar is kept even on pages too short to scroll (e.g. /blogs/), so
+   moving between a long and a short page doesn't shift everything sideways by half a
+   scrollbar (owner noticed it between Resume and Blogs). The kept space shows the page
+   colour, so it's invisible. */
+html { scrollbar-gutter: stable; }
 html.intro-open { overflow: hidden; }
+
+/* Page-to-page navigation cross-fades instead of cutting (same-origin, where the browser
+   supports cross-document view transitions — Chromium, Safari 18.2+; others just navigate).
+   The top bar and the bottom nav stay put, and the bottom nav's highlight slides to the new
+   section, eased like the theme switch's knob (owner's request). Kept under reduced motion:
+   small and visitor-initiated, like the theme switch. */
+@view-transition { navigation: auto; }
+.top-bar { view-transition-name: top-bar; }
+.site-nav { view-transition-name: site-nav; }
+.nav-indicator { view-transition-name: nav-indicator; }
+::view-transition-group(*) { animation-duration: .35s; animation-timing-function: cubic-bezier(.65, 0, .35, 1); }
+::view-transition-old(root), ::view-transition-new(root) { animation-duration: .25s; }
 
 body {
   min-height: 100vh;
@@ -70,7 +89,7 @@ body {
   display: grid;
   grid-template-columns: minmax(0, 1fr); /* column never grows past the viewport to fit wide content (e.g. the 520px .kube) */
   place-items: center;
-  padding: 48px 16px 112px;   /* bottom: room for the fixed contact strip + its fade */
+  padding: 48px 16px 128px;   /* bottom: the end of a page clears the bottom nav and its 120px fade */
   background: var(--bg);
   color: var(--fg);
   font-family: var(--mono);
@@ -158,13 +177,52 @@ a.kube-row:focus-visible { outline: 1px solid var(--blue); outline-offset: -1px;
 a.kube-row:is(.is-selected, :hover, :focus-visible) .kube-mark { visibility: visible; }
 .kube-ok { color: var(--green); }
 
-/* ---------- theme toggle (added by theme.js) ---------- */
+/* ---------- top bar: contact icons + theme switch (templates/partials/top-bar.html) ---------- */
 
-.theme-toggle {
+/* Stays put while the page scrolls (owner's request). Like the bottom nav, it's a set
+   of separate opaque blocks with no strip behind them: text scrolls under the blocks
+   but never shows through them. */
+.top-bar {
   position: fixed;
   top: 16px;
   right: 16px;
   z-index: 10;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.contact-icons {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  height: 30px;   /* = the theme switch */
+  padding: 0 3px;
+  background: var(--panel);
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  box-shadow: 0 2px 10px rgb(0 0 0 / .06);
+}
+.contact-icons a {
+  display: grid;
+  place-items: center;
+  width: 26px;
+  height: 26px;
+  color: var(--muted);
+  border-radius: 50%;
+}
+.contact-icons a:hover, .contact-icons a:focus-visible {
+  color: var(--fg);
+  text-decoration: none;
+  background: color-mix(in srgb, var(--blue) 12%, transparent);
+}
+.contact-icons svg { width: 16px; height: 16px; }
+.contact-icons .icon-fill { fill: currentColor; }
+.contact-icons .icon-stroke { fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+
+/* Theme switch (wired up by theme.js) */
+.theme-toggle {
+  position: relative;
+  flex: none;
   width: 56px;
   height: 30px;
   padding: 0;
@@ -208,25 +266,37 @@ a.kube-row:is(.is-selected, :hover, :focus-visible) .kube-mark { visibility: vis
 [data-theme="dark"] .icon-sun { opacity: 0; transform: rotate(90deg) scale(.5); }
 [data-theme="dark"] .icon-moon { opacity: 1; transform: none; }
 
-/* While switching, every colour cross-fades instead of jumping. The knob keeps
-   its own transitions (more specific !important rules below). */
+/* Switching theme (theme.js): where view transitions exist, the whole page cross-fades
+   as one picture (html.theme-vt) — every letter, surface and the bottom fade in step. */
+html.theme-vt::view-transition-group(*),
+html.theme-vt::view-transition-old(*),
+html.theme-vt::view-transition-new(*) { animation-duration: .2s; animation-timing-function: ease; }
+
+/* Fallback without view transitions (html.theme-anim): every colour cross-fades briefly
+   instead of jumping — text, icons and surfaces together, in .15s. Not slower surfaces:
+   with the background still mid-fade after the text had switched, grey and coloured text
+   sat on a background of about its own shade and seemed to change late (owner noticed,
+   twice). The knob keeps its own, slower slide (more specific !important rules below). */
 html.theme-anim,
 html.theme-anim *,
 html.theme-anim *::before,
 html.theme-anim *::after {
-  transition: background-color .4s ease, color .4s ease, border-color .4s ease,
-    fill .4s ease, stroke .4s ease, box-shadow .4s ease !important;
+  transition: background-color .15s ease, border-color .15s ease, box-shadow .15s ease,
+    color .15s ease, fill .15s ease, stroke .15s ease !important;
 }
 html.theme-anim .theme-knob {
   transition: transform .35s cubic-bezier(.65, 0, .35, 1), background-color .35s, color .35s !important;
 }
 html.theme-anim .theme-knob svg { transition: opacity .35s, transform .35s !important; }
 
-/* ---------- contact bar (templates/partials/contact-bar.html, every page) ---------- */
+/* ---------- bottom nav: Resume / Blogs (templates/partials/site-nav.html, every page) ---------- */
 
-/* A solid, full-width strip at the bottom: page text scrolls *under* it and fades out
-   just above it, so nothing ever shows behind or beside the pill (owner's request). */
-.contact-dock {
+/* The pill (and the TOC button) float over a soft fade: page text fades into the page
+   colour just above them and is gone before it reaches them, so they never cover text,
+   and there's no visible strip or hard edge (owner's requests, in that order: no text
+   through a translucent pill → no strip behind the blocks → no text under the blocks).
+   .site-dock centres the pill and lets clicks through to the page. */
+.site-dock {
   position: fixed;
   left: 0;
   right: 0;
@@ -234,20 +304,26 @@ html.theme-anim .theme-knob svg { transition: opacity .35s, transform .35s !impo
   z-index: 10;
   display: flex;
   justify-content: center;
-  padding: 8px 16px 14px;
-  background: var(--bg);
+  padding: 0 16px 14px;
+  pointer-events: none;
 }
-.contact-dock::before {
+/* 120px tall: solid for the bottom 66px (pill: 14px + 45px, plus a little air), fading
+   out above. Page colour as background-color + a gradient mask, not a gradient image,
+   so it cross-fades in step with the page on a theme switch. */
+.site-dock::before {
   content: "";
   position: absolute;
   left: 0;
   right: 0;
-  bottom: 100%;
-  height: 28px;
-  background: linear-gradient(to bottom, transparent, var(--bg));
-  pointer-events: none;
+  bottom: 0;
+  z-index: -1;
+  height: 120px;
+  background-color: var(--bg);
+  -webkit-mask-image: linear-gradient(to bottom, transparent, rgb(0 0 0 / .45) 22%, rgb(0 0 0 / .85) 36%, #000 45%);
+  mask-image: linear-gradient(to bottom, transparent, rgb(0 0 0 / .45) 22%, rgb(0 0 0 / .85) 36%, #000 45%);
 }
-.contact-bar {
+.site-nav {
+  pointer-events: auto;
   display: flex;
   gap: 2px;
   padding: 5px;
@@ -256,7 +332,9 @@ html.theme-anim .theme-knob svg { transition: opacity .35s, transform .35s !impo
   border-radius: 999px;
   box-shadow: 0 2px 10px rgb(0 0 0 / .06);
 }
-.contact-bar a {
+.site-nav a {
+  position: relative;
+  isolation: isolate;   /* the highlight (z-index -1) sits under the label, inside the link */
   display: inline-flex;
   align-items: center;
   gap: 7px;
@@ -266,17 +344,26 @@ html.theme-anim .theme-knob svg { transition: opacity .35s, transform .35s !impo
   border-radius: 999px;
   white-space: nowrap;
 }
-.contact-bar a:hover, .contact-bar a:focus-visible {
-  text-decoration: none;
+.site-nav a:is(:hover, :focus-visible) { text-decoration: none; }
+.site-nav a:not([aria-current]):is(:hover, :focus-visible) { background: color-mix(in srgb, var(--blue) 12%, transparent); }
+/* the section you're in (aria-current + the highlight element, both set by build.mjs);
+   the highlight is its own element so the page transition can slide it on its own */
+.site-nav a[aria-current] { color: var(--blue); }
+.nav-indicator {
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  border-radius: inherit;
   background: color-mix(in srgb, var(--blue) 12%, transparent);
 }
-.contact-bar svg { width: 15px; height: 15px; flex: none; }
-.contact-bar .icon-fill { fill: currentColor; }
-.contact-bar .icon-stroke { fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+.site-nav svg { width: 15px; height: 15px; flex: none; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
 
 /* ---------- sub pages (cv/, blogs/, posts) ---------- */
 
 body.subpage { place-items: start center; }
+/* Home: no bottom nav (the kubectl menu already links to CV and blogs — owner's request),
+   so no room to keep for it either: the block stays vertically centred. */
+body:has(> .page.home) { padding-bottom: 48px; }
 .back { display: inline-block; margin-bottom: 32px; font-size: 13px; }
 .lead { max-width: 62ch; margin: 10px 0 0; color: var(--muted); }
 
@@ -346,21 +433,27 @@ body.subpage { place-items: start center; }
 .post-desc { margin: 2px 0 0; font-size: 13px; color: var(--muted); }
 
 /* blog post (templates/blog-post.html): same JetBrains Mono as the rest of the site (owner's choice) */
-.post { position: relative; }
+.post-body { position: relative; }   /* from the title down: the TOC sidebar starts level with the h1 */
 .post h1 { font-size: clamp(1.5rem, 4vw, 2.1rem); }
 
-/* table of contents (scripts/build.mjs, active entry from assets/js/toc.js):
-   a box above the article, or a sticky column right of it on wide screens — the
-   article itself stays centred either way. */
-.toc {
-  margin: 24px 0 0;
-  padding: 14px 18px;
-  font-size: 13px;
-  background: var(--panel);
-  border: 1px solid var(--line);
-  border-radius: 10px;
+/* table of contents (scripts/build.mjs; active entry + drawer from assets/js/toc.js):
+   a sticky column right of the article on wide screens; below that, a drawer that
+   slides in from the right when the "Contents" button is pressed, over a dimmed,
+   blurred page (owner's request). The article itself stays centred either way. */
+.toc { font-size: 13px; }
+.toc-head { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin-bottom: 8px; }
+.toc-title { margin: 0; font-size: 11px; letter-spacing: .08em; text-transform: uppercase; color: var(--muted); }
+.toc-toggle, .toc-close, .toc-backdrop { display: none; }
+.toc-toggle svg, .toc-close svg {
+  width: 16px;
+  height: 16px;
+  flex: none;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
 }
-.toc-title { margin: 0 0 8px; font-size: 11px; letter-spacing: .08em; text-transform: uppercase; color: var(--muted); }
 .toc ol { margin: 0; padding: 0; list-style: none; }
 .toc ol ol { margin: 2px 0 4px; padding-left: 14px; border-left: 1px solid var(--line); }
 .toc a {
@@ -384,12 +477,93 @@ body.subpage { place-items: start center; }
     bottom: 0;
     left: calc(100% + 48px);
     width: 230px;
-    margin: 0;
+  }
+  /* sticks below the fixed top bar (16px + 30px tall) and ends above the bottom fade */
+  .toc-inner { position: sticky; top: 72px; max-height: calc(100vh - 72px - 128px); overflow-y: auto; }
+}
+
+/* Narrower: drawer. The button is its own opaque block at the bottom right, level with
+   and as tall as the Resume/Blogs pill. The slide is kept under reduced motion: small
+   and visitor-initiated, like the theme switch (the owner's machine reports reduced motion). */
+@media (max-width: 1339.98px) {
+  .toc-toggle {
+    position: fixed;
+    right: 16px;
+    bottom: 14px;
+    z-index: 11;
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
+    height: 45px;
+    padding: 0 16px;
+    font-size: 13px;
+    color: var(--fg);
+    background: var(--panel);
+    border: 1px solid var(--line);
+    border-radius: 999px;
+    box-shadow: 0 2px 10px rgb(0 0 0 / .06);
+    cursor: pointer;
+  }
+  .toc-toggle:hover { background: color-mix(in srgb, var(--blue) 12%, var(--panel)); }
+  .toc-toggle:focus-visible, .toc-close:focus-visible { outline: 2px solid var(--blue); outline-offset: 2px; }
+
+  .toc-backdrop {
+    display: block;
+    position: fixed;
+    inset: 0;
+    z-index: 25;
+    background: var(--scrim);
+    -webkit-backdrop-filter: blur(3px);
+    backdrop-filter: blur(3px);
+    opacity: 0;
+    visibility: hidden;
+    transition: opacity .3s ease, visibility 0s .3s;
+  }
+
+  .toc {
+    position: fixed;
+    top: 0;
+    right: 0;
+    bottom: 0;
+    z-index: 30;
+    width: min(320px, 86vw);
+    padding: 18px 14px 24px 18px;
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    background: var(--panel);
+    border-left: 1px solid var(--line);
+    box-shadow: -8px 0 32px rgb(0 0 0 / .12);
+    transform: translateX(100%);
+    visibility: hidden;   /* closed: out of the tab order and the accessibility tree */
+    transition: transform .3s cubic-bezier(.2, .8, .2, 1), visibility 0s .3s;
+  }
+  .toc-close {
+    display: grid;
+    place-items: center;
+    width: 30px;
+    height: 30px;
     padding: 0;
+    color: var(--muted);
     background: none;
     border: 0;
+    border-radius: 50%;
+    cursor: pointer;
   }
-  .toc-inner { position: sticky; top: 40px; max-height: calc(100vh - 150px); overflow-y: auto; }
+  .toc-close:hover { color: var(--fg); background: color-mix(in srgb, var(--blue) 12%, transparent); }
+
+  /* open (html.toc-open, set by toc.js). Page scrolling is blocked by toc.js, not by
+     overflow: hidden — that would drop the scrollbar and leave its kept space (html
+     scrollbar-gutter) as an undimmed strip: fixed elements can't paint over it. On a
+     page too short to scroll there is no scrollbar, only the empty space, so it's let go
+     while open (the shift is hidden under the backdrop). */
+  html.toc-open { scrollbar-gutter: auto; }
+  html.toc-open .toc { transform: none; visibility: visible; transition: transform .3s cubic-bezier(.2, .8, .2, 1); }
+  html.toc-open .toc-backdrop { opacity: 1; visibility: visible; transition: opacity .3s ease; }
+}
+/* phones: icon-only button, so it clears the centred Resume/Blogs pill */
+@media (max-width: 599.98px) {
+  .toc-toggle { width: 45px; padding: 0; justify-content: center; }
+  .toc-toggle span { display: none; }
 }
 
 /* headings reached through the TOC / #links stop a bit below the top edge */
@@ -489,7 +663,6 @@ body.subpage { place-items: start center; }
 @media (max-width: 560px) {
   .skills { grid-template-columns: 1fr; gap: 6px; }
   .skills dd { margin-bottom: 10px; }
-  .contact-bar a { padding: 6px 12px; }
 }
 
 @media (prefers-reduced-motion: reduce) {

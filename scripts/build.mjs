@@ -79,8 +79,14 @@ function renderToc(list) {
   if (groups.length < 2) return ''; // not worth a TOC
   const link = h => `<a href="#${h.id}">${h.html.replace(/<\/?a\b[^>]*>/g, '')}</a>`; // no <a> inside <a>
   const items = groups.map(g => `<li>${link(g)}${g.children.length ? `<ol>${g.children.map(c => `<li>${link(c)}</li>`).join('')}</ol>` : ''}</li>`);
-  return `<nav class="toc" aria-label="Contents"><div class="toc-inner"><p class="toc-title">Contents</p><ol>${items.join('')}</ol></div></nav>`;
+  // The button, backdrop and close button are only shown below the sidebar breakpoint,
+  // where the TOC is a drawer (main.css, assets/js/toc.js).
+  return `<button type="button" class="toc-toggle" aria-controls="toc" aria-expanded="false" title="Contents">${ICON_LIST}<span>Contents</span></button>
+    <div class="toc-backdrop" aria-hidden="true"></div>
+    <nav class="toc" id="toc" aria-label="Contents"><div class="toc-inner"><div class="toc-head"><p class="toc-title">Contents</p><button type="button" class="toc-close" aria-label="Close contents">${ICON_CLOSE}</button></div><ol>${items.join('')}</ol></div></nav>`;
 }
+const ICON_LIST = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 6h11M9 12h11M9 18h11M4 6h.01M4 12h.01M4 18h.01"/></svg>';
+const ICON_CLOSE = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6 6 18"/></svg>';
 
 // Fenced code blocks are syntax-highlighted here, at build time (highlight.js classes,
 // coloured by the --hl-* tokens in main.css), and get a label with the language name.
@@ -196,18 +202,29 @@ async function main() {
     posts: posts.length ? posts.map(postRow).join('') : '\n      <li class="empty">No posts yet.</li>',
   }));
 
-  // Shared partials (e.g. the contact bar) into every page, generated ones included.
+  // Shared partials (top bar, bottom nav) into every page, generated ones included.
   const partials = new Map();
   for (const file of await htmlFiles(OUT)) {
     const html = await readFile(file, 'utf8');
     const out = await replaceAsync(html, /<!-- include:([\w-]+) -->/g, async name => {
       if (!partials.has(name)) partials.set(name, (await readFile(path.join(TEMPLATES, 'partials', `${name}.html`), 'utf8')).trim());
-      return partials.get(name);
+      return markCurrent(partials.get(name), file);
     });
     if (out !== html) await writeFile(file, out);
   }
 
   console.log(`built _site/: ${posts.length} post(s)${withDrafts ? ' (drafts included)' : ''}`);
+}
+
+// The link in a partial to the page's own section gets aria-current — "page" on the
+// section's index (/cv/, /blogs/), "true" deeper in (a post) — and the highlight element
+// that the page transition slides between sections (.nav-indicator, main.css).
+function markCurrent(partial, file) {
+  const parts = path.relative(OUT, file).split(path.sep);   // e.g. ['blogs', 'slug', 'index.html']
+  if (parts.length < 2) return partial;                      // home page: no section
+  const current = parts.length === 2 ? 'page' : 'true';
+  return partial.replace(`<a href="/${parts[0]}/">`,
+    `<a href="/${parts[0]}/" aria-current="${current}"><span class="nav-indicator" aria-hidden="true"></span>`);
 }
 
 async function replaceAsync(str, re, fn) {
